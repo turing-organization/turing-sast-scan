@@ -1,36 +1,30 @@
-# Usar uma imagem base do Python
-FROM python:3.12-alpine
+# Stage 1: Pegar o binário do Horusec
+FROM horuszup/horusec-cli:v2.9.0-beta.3 AS horusec
 
-# Definir o diretório de trabalho dentro do container
+# Stage 2: Build da aplicação
+FROM python:3.11-slim
+
+# Instalar git (necessário para clonar repositórios)
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copiar o binário do Horusec da stage anterior
+COPY --from=horusec /usr/local/bin/horusec /usr/local/bin/horusec
+
+# Setar diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos de requisitos para o diretório de trabalho
+# Copiar e instalar dependências Python
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Instale as dependências necessárias
-RUN apk add --no-cache \
-    bash \
-    curl \
-    git \
-    openjdk17 \
-    unzip \
-    wget \
-    && python -m ensurepip \
-    && pip install --upgrade pip
-
-RUN curl -fsSL https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh | bash -s latest
-
-# Instalar PyArmor versão 8
-RUN pip install pyarmor==8.5.12
-
-# Copie o restante do código da aplicação para o diretório de trabalho
+# Copiar aplicação
 COPY . .
 
-# Ofuscar os arquivos Python usando PyArmor 8
-RUN pyarmor gen -O . app.py common
-
-# Definir a porta em que a aplicação irá rodar
+# Expor porta
 EXPOSE 7070
 
-# Defina o comando para rodar a aplicação
-CMD ["python", "app.py"]
+# Rodar aplicação
+CMD ["python3", "app.py"]
