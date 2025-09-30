@@ -1,0 +1,10 @@
+./common/.env
+.vscode
+.venv
+.__pycache__
+.gitignore
+.github
+.git
+Procfile
+README.md
+

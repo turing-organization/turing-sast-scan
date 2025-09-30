@@ -1,0 +1,9 @@
+requests
+pymongo
+python-dotenv
+chardet
+msal
+pyjwt
+aiohttp
+datetime
+flask
